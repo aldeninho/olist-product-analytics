@@ -8,12 +8,13 @@ con = duckdb.connect(str(ROOT / "data" / "olist.duckdb"), read_only=True)
 
 st.set_page_config(page_title="Olist Product Analytics", layout="wide")
 st.title("Olist E-Commerce — Product Analytics Dashboard")
+st.caption("Data grain: one row per order (orders), one row per payment row (payments), one row per item (order_items). Revenue by category is computed at item grain to avoid join fan-out.")
 
 kpi = con.execute("""
 SELECT COUNT(DISTINCT o.order_id) AS orders,
        COUNT(DISTINCT c.customer_unique_id) AS customers,
        ROUND(SUM(p.payment_value),0) AS revenue,
-       ROUND(AVG(p.payment_value),2) AS aov
+       ROUND(SUM(p.payment_value)/COUNT(DISTINCT o.order_id),2) AS aov
 FROM orders o
 JOIN customers c ON c.customer_id = o.customer_id
 JOIN payments p ON p.order_id = o.order_id
@@ -22,7 +23,7 @@ c1, c2, c3, c4 = st.columns(4)
 c1.metric("Orders", f"{kpi.orders:,}")
 c2.metric("Customers", f"{kpi.customers:,}")
 c3.metric("Revenue", f"R$ {kpi.revenue:,.0f}")
-c4.metric("Avg payment", f"R$ {kpi.aov:,.2f}")
+c4.metric("AOV (per order)", f"R$ {kpi.aov:,.2f}")
 
 st.subheader("MAU & orders over time")
 mau = con.execute("""
@@ -46,12 +47,11 @@ st.bar_chart(states)
 st.subheader("Top categories")
 cat = con.execute("""
 SELECT COALESCE(t.product_category_name_english, pr.product_category_name, 'unknown') AS category,
-       ROUND(SUM(p.payment_value),0) AS revenue
+       ROUND(SUM(oi.price + oi.freight_value),0) AS revenue
 FROM order_items oi
 JOIN orders o ON o.order_id = oi.order_id
 JOIN products pr ON pr.product_id = oi.product_id
 LEFT JOIN category_translation t ON t.product_category_name = pr.product_category_name
-JOIN payments p ON p.order_id = o.order_id
 GROUP BY 1 ORDER BY revenue DESC LIMIT 10
 """).fetchdf().set_index("category")
 st.bar_chart(cat)

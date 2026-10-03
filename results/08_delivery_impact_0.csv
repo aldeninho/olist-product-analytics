@@ -1,0 +1,3 @@
+delivery_group,n,mean_score,median_score,std_score
+late,6409,2.271,1.0,1.571
+on_time,89944,4.29,5.0,1.15

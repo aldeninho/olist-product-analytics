@@ -66,14 +66,17 @@ plt.ylim(0, 5); plt.title("Average review score: late vs on-time delivery"); plt
 plt.savefig(CH / "05_delivery_review.png", dpi=130); plt.close()
 
 # 6. Top categories by revenue
+# Separate three metrics that are easy to conflate:
+# - All-time repeat rate: % of customers with >= 2 orders ever (~3.1%)
+# - Month-over-month retention: % of customers active in month m who buy again in m+1 (very low)
+# - Long-term repeat behaviour: % of customers with no second purchase ever (~97%)
 cat = con.execute("""
 SELECT COALESCE(t.product_category_name_english, pr.product_category_name, 'unknown') AS category,
-       SUM(p.payment_value) AS revenue
+       SUM(oi.price + oi.freight_value) AS revenue
 FROM order_items oi
 JOIN orders o ON o.order_id = oi.order_id
 JOIN products pr ON pr.product_id = oi.product_id
 LEFT JOIN category_translation t ON t.product_category_name = pr.product_category_name
-JOIN payments p ON p.order_id = o.order_id
 GROUP BY 1 ORDER BY revenue DESC LIMIT 10
 """).fetchdf()
 plt.figure(figsize=(10, 6))

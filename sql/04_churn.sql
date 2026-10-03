@@ -1,4 +1,5 @@
--- 04. Churn: of customers active in month m, how many come back in m+1?
+-- 04. Month-over-month customer churn (distinct from all-time repeat rate)
+-- Of customers active in month m, what share does NOT purchase again in m+1?
 WITH monthly AS (
     SELECT DISTINCT c.customer_unique_id,
            DATE_TRUNC('month', o.order_purchase_timestamp) AS month

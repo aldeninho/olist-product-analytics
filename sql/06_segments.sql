@@ -11,15 +11,15 @@ GROUP BY 1
 ORDER BY revenue DESC
 LIMIT 10;
 
--- 6b. By category
+-- 6b. By category — item grain (avoids join fan-out from orders x payments)
 SELECT COALESCE(t.product_category_name_english, pr.product_category_name, 'unknown') AS category,
        COUNT(DISTINCT o.order_id) AS orders,
-       ROUND(SUM(p.payment_value), 0) AS revenue
+       COUNT(*) AS items_sold,
+       ROUND(SUM(oi.price + oi.freight_value), 0) AS revenue
 FROM order_items oi
 JOIN orders o ON o.order_id = oi.order_id
 JOIN products pr ON pr.product_id = oi.product_id
 LEFT JOIN category_translation t ON t.product_category_name = pr.product_category_name
-JOIN payments p ON p.order_id = o.order_id
 GROUP BY 1
 ORDER BY revenue DESC
 LIMIT 10;

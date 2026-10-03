@@ -14,5 +14,6 @@ SELECT
     ROUND(SUM(orders > 1) * 100.0 / COUNT(*), 1) AS repeat_customer_pct,
     ROUND(AVG(total_spend), 2) AS avg_revenue_per_customer,
     ROUND(AVG(total_spend / orders), 2) AS avg_order_value,
+    (SELECT ROUND(SUM(payment_value) / COUNT(DISTINCT order_id), 2) FROM payments) AS overall_aov,
     ROUND(SUM(total_spend), 2) AS total_revenue
 FROM customer_spend;

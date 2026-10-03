@@ -1,2 +1,2 @@
-customers,avg_orders_per_customer,repeat_customer_pct,avg_revenue_per_customer,avg_order_value,total_revenue
-96095,1.03,3.1,166.59,161.4,16008872.12
+customers,avg_orders_per_customer,repeat_customer_pct,avg_revenue_per_customer,avg_order_value,overall_aov,total_revenue
+96095,1.03,3.1,166.59,161.4,160.99,16008872.12
