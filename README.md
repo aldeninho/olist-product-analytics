@@ -1,58 +1,97 @@
-# Olist E-Commerce — Product Analytics Case Study
+# 📊 Olist — Customer & Product Analytics Case Study
 
-**One-line problem:** With ~99k real orders and a tiny repeat rate, where is this e-commerce marketplace leaking revenue and customer satisfaction — and what should product fix first?
+![banner](charts/banner.png)
 
-![Dashboard](charts/dashboard_screenshot.png)
+![SQL](https://img.shields.io/badge/SQL-DuckDB-orange) ![Python](https://img.shields.io/badge/Python-3.13-blue) ![Streamlit](https://img.shields.io/badge/Streamlit-1.65-red) ![data](https://img.shields.io/badge/data-~100k%20real%20orders-green)
 
-![Cohort Retention Heatmap](charts/03_cohort_heatmap.png)
+> **Customer/Product Analytics** analysis of **~100k real e-commerce orders (2016–2018)** focused on funnel conversion, **retention**, churn, LTV, and delivery impact on satisfaction.
 
-## Key findings
+## 🔑 Key findings
 
-**Finding 1 — Repeat purchase is extremely rare (not to be confused with monthly churn).**
-- Evidence: All-time repeat rate is only **3.1%** (1.03 avg orders/customer, ~96k customers). This is distinct from the *month-over-month* retention metric below.
-- Business implication: A repeat-purchase/loyalty program is likely the highest-ROI lever.
+1. **🔁 Repeat purchase rate is only ~3.1%** — nearly every customer buys once and never returns. The biggest value lever is a retention program, not acquisition.
+2. **📉 Month-over-month retention is very low** — of customers active in any month, typically ≥99% place zero orders the following month (see `sql/04_churn.sql`). Normal for one-off purchases, but it means each cohort decays in one month.
+3. **📦 Late delivery strongly associates with bad reviews** — on-time avg 4.29/5 vs late 2.27/5. **Welch t-test t≈101, p<0.001; mean difference 2.02 pts, 95% CI [1.98, 2.06], Cohen's d 1.47 (very large).** Observational, **not causal**.
+4. **🗺️ Revenue is concentrated** — São Paulo ≈ R$6.0M of R$16.0M total; top categories: bed/bath, health & beauty, computers accessories.
+5. **✅ Insights are reproducible** — 8/8 automated data-quality checks pass; AOV = R$161; total revenue R$16.0M; no join fan-out (item-grain revenue verified within 5% of payments total).
 
-**Finding 2 — Month-to-month retention is very low.**
-- Evidence: Of customers active in any given month in `sql/04_churn.sql`, typically **≥99%** do not place another order the following month.
-- Caveat: This is an e-commerce marketplace, where multi-month gaps between purchases can be normal behavior — interpret relative to peer benchmarks, not as an emergency on its own.
+## 🖼️ Dashboard preview
 
-**Finding 3 — Late delivery is strongly associated with lower review scores.**
-- Evidence: On-time orders average **4.29/5** vs **2.27/5** for late orders; medians 5 vs 1. Welch t-test: t≈101, p<0.001, n=~96k.
-- **Effect size & uncertainty:** mean difference = **2.02 points**, **95% CI [1.98, 2.06]**, **Cohen's d = 1.47** (very large).
-- Limitation: observational comparison — late delivery may proxy for problematic regions/categories. It does **not** establish causation.
-- Business implication: Prioritize delivery SLAs in hotspot regions; investigate geo/category confounders before attributing fully.
+| Executive | Retention | Operations |
+|---|---|---|
+| ![Executive](charts/page_executive.png) | ![Retention](charts/page_retention.png) | ![Operations](charts/page_operations.png) |
 
-**Finding 4 — Revenue is concentrated geographically and by category.**
-- Evidence: São Paulo ≈ R$6.0M of R$16.0M total; top categories (item-grain revenue): bed/bath & table, health/beauty, computers accessories.
-- Business implication: Logistics and marketing spend should over-index on SP and the top categories.
+## 🛠️ Tools & stack
+| Layer | Tools |
+|---|---|
+| SQL | DuckDB — 8 analyses (`sql/`) |
+| Python | pandas, scipy (stats), seaborn/matplotlib (`scripts/`) |
+| Dashboard | Streamlit multi-page (`dashboard/`) |
+| Data | Public Olist dataset (~100k orders, 2016–2018) |
 
-## Tools
-- SQL (DuckDB) · Python (pandas, scipy, seaborn, matplotlib) · Streamlit
+## 🧭 Data model
 
-## Methodology
-1. Downloaded the public **Olist** dataset (~100k real orders, 2016–2018) into `data/olist.duckdb`.
-2. SQL (`sql/`): 8 analyses — order-status funnel, MAU engagement, monthly cohort retention, month-over-month retention, revenue/LTV, state & category segmentation, delivery performance, observational delivery-impact comparison.
-3. Python (`scripts/`): quality checks, chart generation, scipy Welch t-test with effect size + 95% CI.
-4. **Data grain:** `orders` = one row per order; `order_items` = one row per item; `payments` = one row per payment attempt; `customers` = one row per anonymous customer id. Revenue by category is computed at **item grain** (`price + freight_value`) to avoid join fan-out between orders×payments.
+```mermaid
+erDiagram
+    CUSTOMERS ||--o{ ORDERS : places
+    ORDERS ||--|{ ORDER_ITEMS : contains
+    ORDERS ||--|{ PAYMENTS : settled_by
+    ORDERS ||--o| REVIEWS : rated
+    ORDER_ITEMS }|--|| PRODUCTS : item
+    ORDER_ITEMS }|--|| SELLERS : sold_by
+    PRODUCTS }|--o| CATEGORY_TRANSLATION : category
+```
 
-## Run it yourself
+| Table | Grain | Key use |
+|---|---|---|
+| `orders` | 1 row / order | funnel status, timestamps |
+| `order_items` | 1 row / item | item-grain revenue |
+| `payments` | 1 row / payment attempt | revenue, payment type |
+| `customers` | 1 row / customer | unique-customer metrics |
+| `reviews` | 1 row / review | satisfaction proxy |
+| `products` / `sellers` | 1 row / product or seller | segmentation |
+
+## 📈 Methodology
+1. Download Olist CSVs → `data/` and load to DuckDB (`scripts/build_db.py`).
+2. Run automated quality checks (`scripts/quality_checks.py`) → **8/8 pass**.
+3. Execute SQL analyses (`scripts/run_sql.py`) → `results/*.csv`.
+4. Visualize (`scripts/make_charts.py`) and test delivery-vs-review effect (`scripts/delivery_impact.py`).
+5. Serve results interactively: `streamlit run dashboard/Home.py` → Executive / Retention / Operations pages.
+
+## ✅ Measurable recommendations
+| Recommendation | Segment/target | Expected impact |
+|---|---|---|
+| Launch a repeat-purchase loyalty program | All single-purchase customers (~96.9%) | Each +1pt in repeat rate ≈ +~970 orders |
+| Reduce late-delivery rate in worst states | Regions with late rate > 10% (Operations page) | Associated +2 review points per on-time order |
+| Concentrate logistics spend | São Paulo (38% of revenue) | Protects largest revenue base |
+| Prioritize on-time reviews for top categories | bed/bath, health/beauty, computers | Highest-value revenue protected |
+
+## ⚠️ Limitations
+- Observational, non-randomized data → delivery/review link is **associational**, not causal.
+- Real-world e-commerce purchases are often one-off → low month-over-month retention is not automatically a defect.
+- Dataset spans 2016–2018 Brazil only; findings may not generalize.
+- Olist has no clickstream (view→cart) events → true top-of-funnel conversion is not measurable here.
+- `customers.customer_unique_id` treats a device/identity as one customer; cross-device users are undercounted.
+
+## 🚀 Quick start
 ```bash
+git clone https://github.com/aldeninho/olist-product-analytics.git
+cd olist-product-analytics
 pip install -r requirements.txt
-python scripts/build_db.py        # load CSVs into DuckDB
-python scripts/quality_checks.py  # 8/8 data-quality checks
-python scripts/run_sql.py         # run all SQL analyses -> results/
-python scripts/make_charts.py     # charts -> charts/
-python scripts/delivery_impact.py # t-test, effect size, CI
-streamlit run dashboard/app.py   # interactive dashboard
+# download Olist CSVs from github.com/olist/work-at-olist-data into data/
+python scripts/build_db.py
+python scripts/quality_checks.py
+python scripts/run_sql.py
+python scripts/make_charts.py
+python scripts/delivery_impact.py
+streamlit run dashboard/Home.py
 ```
 
-## Repository structure
+## 📁 Structure
 ```
-data/      raw CSVs + olist.duckdb (excluded from git)
-sql/       01 funnel, 02 active users, 03 cohort retention, 04 month-over-month retention,
-           05 revenue/LTV, 06 segments, 07 delivery vs reviews, 08 delivery impact
-scripts/   build_db, run_sql, make_charts, delivery_impact, quality_checks
-charts/    generated charts + dashboard screenshot
-dashboard/ Streamlit app
-results/   CSV outputs of each query
+charts/    all generated charts + dashboard screenshots + banner
+data/      raw CSVs + olist.duckdb (git-ignored)
+dashboard/ Home.py + pages/ (Executive, Retention, Operations)
+results/   per-query CSV outputs
+scripts/   build_db, run_sql, make_charts, make_banner, delivery_impact, quality_checks
+sql/       01 funnel … 08 delivery impact
 ```
