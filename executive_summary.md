@@ -1,13 +1,11 @@
 # Executive Summary — Olist Product Analytics
 
 **Top 3 insights**
-1. Churn is the dominant problem: only ~3.1% of customers ever buy twice; monthly customer churn hovers at ~99.5%.
-2. Late delivery is a satisfaction killer: 4.29 vs 2.27 average review score (on-time vs late), t-test p < 0.001.
-3. Revenue is concentrated (SP = 37%) and category-led (bed_bath_table, health_beauty, computers_accessories).
+1. Near-zero repeat purchase: only ~3.1% of customers buy twice; monthly churn ~99.5% → biggest growth lever is retention, not acquisition.
+2. Late delivery is strongly associated with lower review scores (4.29→2.27, Welch t-test p<0.001). Observational — likely mixed with geo/category effects.
+3. Revenue concentrated: São Paulo = R$6M of R$16M; top categories: bed/bath, health & beauty, computers accessories.
 
 **Recommendations**
-- Fix delivery SLAs; the worst days cluster by region/category → targeted carrier SLAs.
-- Retention program: post-purchase re-engagement email at 30/60/90 days.
-- Regional logistics investment in RJ & MG.
-
-**Metrics used**: order status funnel, MAU, monthly churn %, cohort retention, AOV, revenue per customer, net retention by channel... (see sql/).
+- Post-purchase re-engagement program at 30/60/90 days.
+- Review carrier SLAs in late-delivery hotspots (regional + category effects).
+- Focus logistics/marketing spend on SP and top categories.

@@ -1,45 +1,48 @@
 # Olist E-Commerce — Product Analytics Case Study
 
-## Business question
-**How healthy is the Olist customer base, and where is revenue/retention leaking?**
+**One-line problem:** With ~99k real orders and near-zero repeat purchase, where is an e-commerce marketplace leaking revenue and customer satisfaction — and what should product fix first?
 
-## Dataset
-Real, public data from **Olist** (Brazilian e-commerce marketplace, 2016–2018), ~100k orders,
-mirrored at `github.com/olist/work-at-olist-data`. Loaded into DuckDB (`data/olist.duckdb`).
+![Dashboard](charts/dashboard_screenshot.png)
 
-## Tech stack
-- **SQL** (DuckDB) for analysis — `sql/01–08`
-- **Python** (pandas, scipy, matplotlib, seaborn) — `scripts/`
-- **Streamlit** dashboard — `dashboard/app.py`
+## Key findings
 
-## How to run
+**Finding 1 — Retention is the biggest lever, and it's broken.**
+- Evidence: Only 3.1% of 96k customers ever buy twice (1.03 avg orders/customer); month-over-month customer churn is ~99.5%.
+- Business implication: A repeat-purchase/loyalty program likely creates more revenue than acquisition spend at the top of the funnel.
+
+**Finding 2 — Late delivery is strongly associated with low satisfaction.**
+- Evidence: On-time orders average 4.29/5 reviews vs 2.27/5 for late orders; Welch two-sample t-test t ≈ 101, p < 0.001 (n = ~96k).
+- Business implication: Fix delivery SLAs. *Limitation: this is an observational correlation — late delivery may proxy for problem regions/categories, not a pure causal effect.*
+
+**Finding 3 — Revenue is concentrated geographically and by category.**
+- Evidence: São Paulo alone generates R$6.0M of R$16.0M total revenue; bed/bath, health & beauty, and computers accessories are the top-3 categories.
+- Business implication: Targeted marketing + logistics in high-revenue regions/categories yields the highest ROI.
+
+## Tools
+- SQL (DuckDB) · Python (pandas, scipy, seaborn, matplotlib) · Streamlit
+
+## Methodology
+1. Loaded the public **Olist** dataset (~100k real orders, 2016–2018, `github.com/olist/work-at-olist-data`) into DuckDB.
+2. SQL: 8 analyses — order-status funnel, MAU engagement, monthly cohort retention, month-over-month churn, revenue/LTV, state & category segmentation, delivery performance, A/B-style group comparison.
+3. Python: t-test on delivery vs review scores; publication-ready charts; Streamlit dashboard.
+
+## Run it yourself
 ```bash
 pip install -r requirements.txt
 python scripts/build_db.py      # load CSVs into DuckDB
 python scripts/run_sql.py       # run all SQL analyses -> results/
 python scripts/make_charts.py   # charts -> charts/
-python scripts/ab_test.py       # Welch t-test on delivery impact
+python scripts/ab_test.py       # Welch t-test
 streamlit run dashboard/app.py  # interactive dashboard
 ```
 
-## Key findings
-1. **Retention is near-zero**: ~99.5% of customers never buy again (avg 1.03 orders/customer, 3.1% repeat). Biggest business opportunity = repeat purchase programs.
-2. **Late delivery destroys satisfaction**: on-time orders average **4.29/5** reviews vs **2.27/5** for late orders. Welch t-test: t ≈ 101, p << 0.001.
-3. **Geographic concentration**: São Paulo alone contributes ~R$6M of R$16M revenue.
-4. **Top categories**: bed/bath, health & beauty, computers accessories lead revenue.
-
-## Recommendations
-- Invest in delivery SLA; the late-delivery segment (~7% of orders) drags ratings sharply.
-- Build a repeat-purchase/loyalty program — current retention is ~0.5% month over month.
-- Expand logistics into RJ/MG where customer count is high but revenue per customer trails SP.
-
-## Repo structure
+## Repository structure
 ```
-data/      CSVs + olist.duckdb
+data/      raw CSVs + olist.duckdb (excluded from git — see README)
 sql/       01 funnel, 02 active users, 03 cohort retention, 04 churn,
            05 revenue/LTV, 06 segments, 07 delivery vs reviews, 08 A/B test
 scripts/   build_db, run_sql, make_charts, ab_test
-charts/    generated charts
+charts/    generated charts + dashboard screenshot
 dashboard/ Streamlit app
 results/   CSV outputs of each query
 ```
